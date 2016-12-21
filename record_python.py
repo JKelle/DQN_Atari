@@ -1,13 +1,10 @@
-#!/usr/bin/env python
-# python_example.py
-# Author: Ben Goodrich
-#
-# This is a direct port to python of the shared library example from
-# ALE provided in doc/examples/sharedLibraryInterfaceExample.cpp
+"""
+This module is a loose port of the shared library example from
+ALE provided in doc/examples/sharedLibraryInterfaceExample.cpp
+"""
+
 import sys
 import os
-import thread
-#from keylistener import *
 from random import randrange
 from ale_python_interface import ALEInterface
 
@@ -16,8 +13,6 @@ if len(sys.argv) < 3:
   sys.exit()
 
 ale = ALEInterface()
-
-#event = CEvent()
 
 # Get & Set the desired settings
 ale.setInt(b'random_seed', 123)
@@ -42,10 +37,9 @@ USE_SDL = True
 # Get the list of legal actions
 legal_actions = ale.getLegalActionSet()
 
-def play():
+def play(num_episodes):
   # Play 10 episodes
-  for episode in range(1):
-    #thread.start_new_thread( handle(), ("Thread-1", 2, ) )
+  for episode in range(num_episodes):
     total_reward = 0
     while not ale.game_over():
       a = legal_actions[randrange(len(legal_actions))]
@@ -55,6 +49,5 @@ def play():
     print('Episode %d ended with score: %d' % (episode, total_reward))
     ale.reset_game()
   print 'Recording complete.'
-#thread.start_new_thread( handle(), ("Thread-1", 2, ) )
-#thread.start_new_thread( play, tuple() )
-play()
+
+play(1)
