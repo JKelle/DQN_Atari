@@ -1,3 +1,4 @@
 *.pyc
 Arcade-Learning-Environment/
 roms/
+temp.py
