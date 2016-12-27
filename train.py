@@ -42,9 +42,10 @@ ale.loadROM(rom_file)
 
 
 def main(num_frames=50000000, replay_capacity=1000000, num_repeat_action=4,
-         frames_per_state=4, mini_batch_size=32, history_threshold=1000):
+         frames_per_state=4, mini_batch_size=32, history_threshold=50000,
+         checkpoint_frequency=1000):
     
-    agent = DQNAgent(sess)
+    agent = DQNAgent(sess, checkpoint_frequency)
     sess.run(tf.global_variables_initializer())
 
     # Initialize replay memory to capacity replay_capacity
@@ -71,7 +72,10 @@ def main(num_frames=50000000, replay_capacity=1000000, num_repeat_action=4,
         assert cur_state.shape == (84, 84, 4)
 
         while not ale.game_over():
-            
+
+            if counter % 500 == 0:
+                print "starting iteration", counter
+
             # epsilon greedy
             if random.random() < epsilon:
                 # take a random action
