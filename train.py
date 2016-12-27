@@ -41,10 +41,10 @@ rom_file = "roms/breakout.bin"
 ale.loadROM(rom_file)
 
 
-def main(num_frames=1000, replay_capacity=10000, num_repeat_action=4,
+def main(num_frames=50000000, replay_capacity=1000000, num_repeat_action=4,
          frames_per_state=4, mini_batch_size=32, history_threshold=1000):
     
-    agent = DQNAgent()
+    agent = DQNAgent(sess)
     sess.run(tf.global_variables_initializer())
 
     # Initialize replay memory to capacity replay_capacity
@@ -71,33 +71,20 @@ def main(num_frames=1000, replay_capacity=10000, num_repeat_action=4,
         assert cur_state.shape == (84, 84, 4)
 
         while not ale.game_over():
-
-            if DEBUG and counter % 100 == 0:
-                print "epsilon =", epsilon
-
+            
             # epsilon greedy
             if random.random() < epsilon:
                 # take a random action
-                if DEBUG and counter % 100 == 0:
-                    print "about to pick random action"
                 action = random.choice(ale.getLegalActionSet())
             else:
                 # choose action according the DQN policy
-                if DEBUG and counter % 100 == 0:
-                    print "choosing on-policy action"
                 action = agent.getAction(cur_state)
-
-            if DEBUG and counter % 100 == 0:
-                print "got action", action
 
             # take the action 4 times
             reward = 0
             for _ in range(num_repeat_action):
                 prev_frame = cur_frame
-                if DEBUG and counter % 100 == 0:
-                    print "\t(taking action %i)" % action
                 reward += ale.act(action)
-                # TODO: handle "game over"
                 cur_frame = ale.getScreenRGB()
                 recent_frames.append(preprocess(cur_frame, prev_frame))
 
@@ -105,12 +92,8 @@ def main(num_frames=1000, replay_capacity=10000, num_repeat_action=4,
             reward = min(reward, 1)
             reward = max(reward, -1)
 
-            if DEBUG and counter % 100 == 0:
-                print "got reward", reward
-
             # stack the most recent 4 frames
             next_state = np.stack(recent_frames, axis=2)
-            assert next_state.shape == (84, 84, 4)
 
             # store transition in replay memory
             replay_memory.append((cur_state, action, reward, next_state))

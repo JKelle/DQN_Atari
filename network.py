@@ -29,38 +29,38 @@ class Network(object):
 			self.input_state = tf.placeholder(tf.float32, shape=[None, 84, 84, 4])
 
 			# conv2 layer
-			W_conv1 = weight_variable([8, 8, 4, 32])
-			b_conv1 = bias_variable([32])
-			h_conv1 = tf.nn.relu(tf.nn.conv2d(self.input_state, W_conv1, strides=[1, 4, 4, 1], padding="SAME") + b_conv1)
+			self.W_conv1 = weight_variable([8, 8, 4, 32])
+			self.b_conv1 = bias_variable([32])
+			h_conv1 = tf.nn.relu(tf.nn.conv2d(self.input_state, self.W_conv1, strides=[1, 4, 4, 1], padding="SAME") + self.b_conv1)
 			# image is now 21 x 21 x 32
 
 			# conv2 layer
-			W_conv2 = weight_variable([4, 4, 32, 64])
-			b_conv2 = bias_variable([64])
-			h_conv2 = tf.nn.relu(tf.nn.conv2d(h_conv1, W_conv2, strides=[1, 2, 2, 1], padding="SAME") + b_conv2)
+			self.W_conv2 = weight_variable([4, 4, 32, 64])
+			self.b_conv2 = bias_variable([64])
+			h_conv2 = tf.nn.relu(tf.nn.conv2d(h_conv1, self.W_conv2, strides=[1, 2, 2, 1], padding="SAME") + self.b_conv2)
 			# image is now 11 x 11 x 64
 
 			# conv3 layer
-			W_conv3 = weight_variable([3, 3, 64, 64])
-			b_conv3 = bias_variable([64])
-			h_conv3 = tf.nn.relu(tf.nn.conv2d(h_conv2, W_conv3, strides=[1, 1, 1, 1], padding="SAME") + b_conv2)
+			self.W_conv3 = weight_variable([3, 3, 64, 64])
+			self.b_conv3 = bias_variable([64])
+			h_conv3 = tf.nn.relu(tf.nn.conv2d(h_conv2, self.W_conv3, strides=[1, 1, 1, 1], padding="SAME") + self.b_conv3)
 			# image is now 11 x 11 x 64
 
 			# fc1 layer
 			h_conv3_flat = tf.reshape(h_conv3, [-1, 11 * 11 * 64])
-			W_fc1 = weight_variable([11 * 11 * 64, 512])
-			b_fc1 = bias_variable([512])
-			h_fc1 = tf.nn.relu(tf.matmul(h_conv3_flat, W_fc1) + b_fc1)
+			self.W_fc1 = weight_variable([11 * 11 * 64, 512])
+			self.b_fc1 = bias_variable([512])
+			h_fc1 = tf.nn.relu(tf.matmul(h_conv3_flat, self.W_fc1) + self.b_fc1)
 
 			# keep_prob = tf.placeholder(tf.float32)
 			# h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
 			# fc2 layer
-			W_fc2 = weight_variable([512, NUM_ACTIONS])
-			b_fc2 = bias_variable([NUM_ACTIONS])
+			self.W_fc2 = weight_variable([512, NUM_ACTIONS])
+			self.b_fc2 = bias_variable([NUM_ACTIONS])
 
 			# distribution of actions
-			self.q_values = tf.matmul(h_fc1, W_fc2) + b_fc2
+			self.q_values = tf.matmul(h_fc1, self.W_fc2) + self.b_fc2
 
 			# selects the  single action with max value
 			self.action = tf.argmax(self.q_values, 1)

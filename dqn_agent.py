@@ -10,9 +10,13 @@ NUM_ACTIONS = 18
 
 class DQNAgent(object):
 
-	def __init__(self):
+	def __init__(self, sess):
+		self.sess = sess
+
 		# discount factor for future rewards
 		self.gamma = 0.99
+		self.target_network_update_frequency = 10000
+		self.update_counter = 0
 
 		# defines the convnet architecture in TensorFlow
 		self.prediction_network = Network("prediction")
@@ -67,20 +71,21 @@ class DQNAgent(object):
 
 		self.prediction_network.train_step.run(feed_dict=feed_dict)
 
+		self.update_counter += 1
+		if self.update_counter % self.target_network_update_frequency == 0:
+			self._updateTargetNetwork()
+
 		return self.prediction_network.loss.eval(feed_dict=feed_dict)
 
-
-if __name__ == '__main__':
-	sess = tf.Session()
-	sess.run(tf.global_variables_initializer())
-
-	for i in range(20000):
-	  batch = mnist.train.next_batch(50)
-	  if i%100 == 0:
-	    train_accuracy = accuracy.eval(feed_dict={
-	        x:batch[0], y_: batch[1], keep_prob: 1.0})
-	    print("step %d, training accuracy %g"%(i, train_accuracy))
-	  train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
-
-	print("test accuracy %g"%accuracy.eval(feed_dict={
-	    x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
+	def _updateTargetNetwork(self):
+		print "updating target network ..."
+		self.sess.run(self.target_network.W_conv1.assign(self.prediction_network.W_conv1))
+		self.sess.run(self.target_network.W_conv2.assign(self.prediction_network.W_conv2))
+		self.sess.run(self.target_network.W_conv3.assign(self.prediction_network.W_conv3))
+		self.sess.run(self.target_network.W_fc1.assign(self.prediction_network.W_fc1))
+		self.sess.run(self.target_network.W_fc2.assign(self.prediction_network.W_fc2))
+		self.sess.run(self.target_network.b_conv1.assign(self.prediction_network.b_conv1))
+		self.sess.run(self.target_network.b_conv2.assign(self.prediction_network.b_conv2))
+		self.sess.run(self.target_network.b_conv3.assign(self.prediction_network.b_conv3))
+		self.sess.run(self.target_network.b_fc1.assign(self.prediction_network.b_fc1))
+		self.sess.run(self.target_network.b_fc2.assign(self.prediction_network.b_fc2))
