@@ -43,10 +43,10 @@ ale.loadROM(rom_file)
 
 def main(num_frames=50000000, replay_capacity=1000000, num_repeat_action=4,
          frames_per_state=4, mini_batch_size=32, history_threshold=50000,
-         checkpoint_frequency=1000):
+         checkpoint_frequency=1000, target_network_update_frequency=10000,
+         learning_rate=0.00025):
     
-    agent = DQNAgent(sess, checkpoint_frequency)
-    sess.run(tf.global_variables_initializer())
+    agent = DQNAgent(sess, checkpoint_frequency, target_network_update_frequency, learning_rate=learning_rate)
 
     # Initialize replay memory to capacity replay_capacity
     replay_memory = deque([], replay_capacity)

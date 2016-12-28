@@ -45,6 +45,7 @@ class DQNAgent(object):
 			self.update_counter = int(ckpt.model_checkpoint_path.split('-')[-1])
 		else:
 			print "WARNING: no checkpoint found"
+			self.sess.run(tf.global_variables_initializer())
 
 	def getAction(self, state):
 		"""
