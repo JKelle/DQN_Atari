@@ -84,8 +84,9 @@ class Network(object):
 			# compute the Q value of the actions taken in the first state
 			observed_values = tf.reduce_sum(tf.mul(self.q_values, tf.one_hot(self.actions, NUM_ACTIONS)))
 
-			# compute the loss
-			self.loss = tf.square(tf.sub(target_values, observed_values))
+			# compute the loss - uses Huber to clip gradient
+			err = tf.sub(target_values, observed_values)
+			self.loss = tf.select(tf.abs(err) < 1.0, 0.5 * tf.square(err), tf.abs(err) - 0.5)
 
 			######################
 			# Training optimizer #

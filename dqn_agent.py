@@ -95,8 +95,6 @@ class DQNAgent(object):
 		target_q_values = self.target_network.q_values.eval(
 			feed_dict={self.target_network.input_state:state2})
 
-		# TODO: gradient clipping
-
 		feed_dict = {
 			self.prediction_network.input_state: state1,
 			self.prediction_network.actions: actions,
