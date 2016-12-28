@@ -2,7 +2,7 @@
 import tensorflow as tf
 
 
-NUM_ACTIONS = 18
+NUM_ACTIONS = 3
 
 
 def weight_variable(shape):

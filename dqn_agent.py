@@ -7,8 +7,8 @@ import tensorflow as tf
 from network import Network
 
 
-NUM_ACTIONS = 18
-CHECKPOINT_DIR = "checkpoints"
+NUM_ACTIONS = 3
+CHECKPOINT_DIR = "checkpointReducedActionSet"
 
 
 class DQNAgent(object):

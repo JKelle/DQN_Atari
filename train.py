@@ -23,6 +23,8 @@ DEBUG = False
 
 ale = ALEInterface()
 
+LEGAL_ACTIONS = [1, 11, 12]
+
 ale.setInt(b'random_seed', int(time.time()*1000))
 
 # Set USE_SDL to true to display the screen. ALE must be compilied
@@ -76,10 +78,11 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
             # epsilon greedy
             if random.random() < epsilon:
                 # take a random action
-                action = random.choice(ale.getLegalActionSet())
+                action = random.choice(LEGAL_ACTIONS)
             else:
                 # choose action according the DQN policy
-                action = agent.getAction(cur_state)
+                action_index = agent.getAction(cur_state)
+                action = LEGAL_ACTIONS[action_index]
 
             # repeat the action 4 times
             reward = 0
