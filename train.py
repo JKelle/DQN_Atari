@@ -9,6 +9,7 @@
 import argparse
 from collections import deque
 import random
+import time
 
 from ale_python_interface import ALEInterface
 import numpy as np
@@ -22,7 +23,7 @@ DEBUG = False
 
 ale = ALEInterface()
 
-ale.setInt(b'random_seed', 123)
+ale.setInt(b'random_seed', int(time.time()*1000))
 
 # Set USE_SDL to true to display the screen. ALE must be compilied
 # with SDL enabled for this to work. On OSX, pygame init is used to
@@ -54,14 +55,15 @@ def main(num_frames=50000000, replay_capacity=1000000, num_repeat_action=4,
 
     # epsilon-greedy parameters
     epsilon = 1.0
-    epsilon_delta = (1.0 - 0.1)/1000000
-    epsilon_min = 0.1
+    epsilon_min = 0.2
+    epsilon_delta = (1.0 - epsilon_min)/1000000
 
     # Initialize action-value function Q with random weights h
     # Initialize target action-value function Q^ with weights h2 5 h
 
     counter = 0
 
+    # TODO: fix this loop condition
     for episode in xrange(num_frames):
 
         ale.reset_game()
@@ -73,8 +75,8 @@ def main(num_frames=50000000, replay_capacity=1000000, num_repeat_action=4,
 
         while not ale.game_over():
 
-            if counter % 500 == 0:
-                print "starting iteration", counter
+            # if counter % 1000 == 0:
+            #     print "starting iteration", counter
 
             # epsilon greedy
             if random.random() < epsilon:
@@ -112,11 +114,20 @@ def main(num_frames=50000000, replay_capacity=1000000, num_repeat_action=4,
                 transitions = random.sample(replay_memory, mini_batch_size)
                 loss = agent.trainMiniBatch(transitions)
                 if counter % 100 == 0:
-                    print
-                    print counter
-                    print loss
+                    print "%i:\t%s\t%f\t%s minutes" % (counter, action, np.sqrt(loss.dot(loss)), (time.time() - START_TIME)/60)
 
 
 if __name__ == '__main__':
+    START_TIME = time.time()
     with tf.Session() as sess:
-        main()
+        main(
+            # num_frames=50000000,
+            # replay_capacity=1000000,
+            # num_repeat_action=4,
+            # frames_per_state=4,
+            # mini_batch_size=32,
+            # history_threshold=500,
+            # checkpoint_frequency=500,
+            # target_network_update_frequency=1000
+            # learning_rate=0.00010
+        )
