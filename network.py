@@ -82,7 +82,7 @@ class Network(object):
 			target_values = tf.add(self.rewards, discounted_target_q_values)
 
 			# compute the Q value of the actions taken in the first state
-			observed_values = tf.reduce_sum(tf.mul(self.q_values, tf.one_hot(self.actions, NUM_ACTIONS)))
+			observed_values = tf.reduce_sum(tf.mul(self.q_values, tf.one_hot(self.actions, NUM_ACTIONS)), axis=1)
 
 			# compute the loss - uses Huber to clip gradient
 			err = tf.sub(target_values, observed_values)
