@@ -78,11 +78,12 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
             # epsilon greedy
             if random.random() < epsilon:
                 # take a random action
-                action = random.choice(LEGAL_ACTIONS)
+                action_index = random.choice(range(len(LEGAL_ACTIONS)))
             else:
                 # choose action according the DQN policy
                 action_index = agent.getAction(cur_state)
-                action = LEGAL_ACTIONS[action_index]
+            
+            action = LEGAL_ACTIONS[action_index]
 
             # repeat the action 4 times
             reward = 0
@@ -102,7 +103,7 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
             next_state = np.stack(frame_history, axis=2)
 
             # store transition in replay memory
-            replay_memory.append((cur_state, action, reward, next_state))
+            replay_memory.append((cur_state, action_index, reward, next_state))
 
             # update epsilon
             epsilon -= epsilon_delta
