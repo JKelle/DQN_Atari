@@ -20,11 +20,13 @@ class DQNAgent(object):
 		self.gamma = 0.99
 		self.target_network_update_frequency = target_network_update_frequency
 		self.checkpoint_frequency = checkpoint_frequency
-		self.update_counter = 0
+		self.counter = 0
 
 		# defines the convnet architecture in TensorFlow
 		self.prediction_network = Network("prediction", learning_rate=learning_rate)
 		self.target_network = Network("target", learning_rate=learning_rate)
+
+		self.sess.run(tf.global_variables_initializer())
 
 		self.saver = tf.train.Saver([
 			self.target_network.W_conv1,
@@ -51,11 +53,16 @@ class DQNAgent(object):
 
 		ckpt = tf.train.get_checkpoint_state(CHECKPOINT_DIR)
 		if ckpt and ckpt.model_checkpoint_path:
+			print "loading checkpoint parameters ..."
 			self.saver.restore(self.sess, ckpt.model_checkpoint_path)
-			self.update_counter = int(ckpt.model_checkpoint_path.split('-')[-1])
+			self.counter = int(ckpt.model_checkpoint_path.split('-')[-1])
 		else:
 			print "WARNING: no checkpoint found"
-			self.sess.run(tf.global_variables_initializer())
+
+		# self._assertSameWeights()
+
+	def getCounter(self):
+		return self.counter
 
 	def getAction(self, state):
 		"""
@@ -104,15 +111,17 @@ class DQNAgent(object):
 
 		self.prediction_network.train_step.run(feed_dict=feed_dict)
 
-		self.update_counter += 1
-		if self.update_counter % self.target_network_update_frequency == 0:
+		self.counter += 1
+		
+		# update target network
+		if self.counter % self.target_network_update_frequency == 0:
 			print "updating target network ..."
 			self._updateTargetNetwork()
 		
-		if self.update_counter % self.checkpoint_frequency == 0:
-			print "checkpionting %d ... " % self.update_counter
-			self._updateTargetNetwork()
-			self.saver.save(self.sess, os.path.join(CHECKPOINT_DIR, "model"), global_step=self.update_counter)
+		# checkpoint (save weights to disk)
+		if self.counter % self.checkpoint_frequency == 0:
+			print "checkpointing %d ... " % self.counter
+			self.saver.save(self.sess, os.path.join(CHECKPOINT_DIR, "model"), global_step=self.counter)
 
 		return self.prediction_network.loss.eval(feed_dict=feed_dict)
 
@@ -127,7 +136,7 @@ class DQNAgent(object):
 		self.sess.run(self.target_network.b_conv3.assign(self.prediction_network.b_conv3))
 		self.sess.run(self.target_network.b_fc1.assign(self.prediction_network.b_fc1))
 		self.sess.run(self.target_network.b_fc2.assign(self.prediction_network.b_fc2))
-		self._assertSameWeights()
+		# self._assertSameWeights()
 
 	def _assertSameWeights(self):
 		target_weights = self.sess.run([
@@ -157,3 +166,5 @@ class DQNAgent(object):
 
 		for target_tensor, prediction_tensor in zip(target_weights, prediction_weights):
 			assert (target_tensor == prediction_tensor).all()
+
+		print "True"
