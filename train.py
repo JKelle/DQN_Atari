@@ -60,7 +60,7 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
     epsilon_min = 0.2
     epsilon_delta = (1.0 - epsilon_min)/1000000
 
-    counter = 0
+    counter = agent.getCounter()
 
     # TODO: fix this loop condition
     for episode in xrange(num_frames):
@@ -113,6 +113,8 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
             counter += 1
 
             if len(replay_memory) < history_threshold:
+                if len(replay_memory) % 10000 == 0:
+                    print "generated %d transitions" % len(replay_memory)
                 continue
 
             # sample transitions from replay_memory and peform SGD    
