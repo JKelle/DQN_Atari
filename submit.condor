@@ -1,0 +1,37 @@
+
++Group = "GRAD"
++Project = "OTHER"
++ProjectDescription = "Deep Reinforcement Learning project - training a DQN"
+
+Universe = vanilla
+Executable = /bin/bash
+
++GPUJob = true
+
+Requirements = (TARGET.MACHINE=="eldar-11.cs.utexas.edu" \
+             || TARGET.MACHINE=="eldar-12.cs.utexas.edu" \
+             || TARGET.MACHINE=="eldar-13.cs.utexas.edu" \
+             || TARGET.MACHINE=="eldar-14.cs.utexas.edu" \
+             || TARGET.MACHINE=="eldar-15.cs.utexas.edu" \
+             || TARGET.MACHINE=="eldar-16.cs.utexas.edu" \
+             || TARGET.MACHINE=="eldar-17.cs.utexas.edu" \
+             || TARGET.MACHINE=="eldar-18.cs.utexas.edu" \
+             || TARGET.MACHINE=="eldar-19.cs.utexas.edu" \
+             || TARGET.MACHINE=="eldar-20.cs.utexas.edu" \
+             || TARGET.MACHINE=="eldar-21.cs.utexas.edu" \
+             || TARGET.MACHINE=="eldar-22.cs.utexas.edu" \
+             || TARGET.MACHINE=="eldar-23.cs.utexas.edu" \
+             || TARGET.MACHINE=="eldar-24.cs.utexas.edu" \
+             || TARGET.MACHINE=="eldar-25.cs.utexas.edu" \
+             || TARGET.MACHINE=="eldar-26.cs.utexas.edu" \
+             || TARGET.MACHINE=="eldar-27.cs.utexas.edu" \
+             || TARGET.MACHINE=="eldar-28.cs.utexas.edu" \
+             || TARGET.MACHINE=="eldar-29.cs.utexas.edu")
+
+Output = condor.out
+Error = condor.err
+Log = condor.log
+
+Arguments = train.sh
+Queue
+
