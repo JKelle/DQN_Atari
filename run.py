@@ -45,9 +45,7 @@ if USE_SDL:
 rom_file = "roms/breakout.bin"
 ale.loadROM(rom_file)
 
-num_episodes=1
-num_repeat_action=4
-frames_per_state=4
+
 def play(agent, num_episodes=1, num_repeat_action=4, frames_per_state=4, epsilon=0.05):
     """
     Actions:
@@ -63,7 +61,7 @@ def play(agent, num_episodes=1, num_repeat_action=4, frames_per_state=4, epsilon
          7 : no ball, moves to the left
          8 : no ball, moves to the right
          9 : no ball, moves to the left
-        
+
         10 : starts the ball, doesn't move
         11 : starts the ball, moves to the right
         12 : starts the ball, moves to the left
@@ -78,19 +76,19 @@ def play(agent, num_episodes=1, num_repeat_action=4, frames_per_state=4, epsilon
     # Play 10 episodes ("episode" = one game)
     for episode in xrange(num_episodes):
         total_reward = 0
-        
+
         # reset the game
         ale.reset_game()
         is_new_game = True
-        
+
         # for the first frame, just copy the same frame four times
         cur_frame = ale.getScreenRGB()
         cur_state = np.stack([preprocess(cur_frame)]*frames_per_state, axis=2)
         assert cur_state.shape == (84, 84, 4)
-        
+
         # play one game
         while not ale.game_over():
-            
+
             # # epsilon greedy
             # if is_new_game:
             #     action = 1  # serve the ball, don't move the paddle
@@ -121,9 +119,9 @@ def play(agent, num_episodes=1, num_repeat_action=4, frames_per_state=4, epsilon
 
             # stack the most recent 4 frames
             cur_state = np.stack(recent_frames, axis=2)
-        
+
         print('Episode %d ended with score: %d' % (episode, total_reward))
-        
+
         # reset the game to run another episode
         ale.reset_game()
 
@@ -137,7 +135,7 @@ def main(sess):
 
     parser = argparse.ArgumentParser(
         description="This program runs the Atari game Breakout with an AI agent.")
-    
+
     parser.add_argument(
         '-a', '--agent',
         default='dqn',
@@ -148,7 +146,7 @@ def main(sess):
     args = parser.parse_args()
 
     agent = possible_agents[args.agent_type]
-    
+
     play(agent, num_episodes=10, epsilon=0.0)
 
 
