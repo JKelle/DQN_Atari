@@ -29,36 +29,40 @@ class DQNAgent(object):
 
 		self.sess.run(tf.global_variables_initializer())
 
-		self.saver = tf.train.Saver([
-			self.target_network.W_conv1,
-			self.target_network.W_conv2,
-			self.target_network.W_conv3,
-			self.target_network.W_fc1,
-			self.target_network.W_fc2,
-			self.target_network.b_conv1,
-			self.target_network.b_conv2,
-			self.target_network.b_conv3,
-			self.target_network.b_fc1,
-			self.target_network.b_fc2,
-			self.prediction_network.W_conv1,
-			self.prediction_network.W_conv2,
-			self.prediction_network.W_conv3,
-			self.prediction_network.W_fc1,
-			self.prediction_network.W_fc2,
-			self.prediction_network.b_conv1,
-			self.prediction_network.b_conv2,
-			self.prediction_network.b_conv3,
-			self.prediction_network.b_fc1,
-			self.prediction_network.b_fc2,
-		])
+		self.saver = tf.train.Saver(
+			[
+				self.target_network.W_conv1,
+				self.target_network.W_conv2,
+				self.target_network.W_conv3,
+				self.target_network.W_fc1,
+				self.target_network.W_fc2,
+				self.target_network.b_conv1,
+				self.target_network.b_conv2,
+				self.target_network.b_conv3,
+				self.target_network.b_fc1,
+				self.target_network.b_fc2,
+				self.prediction_network.W_conv1,
+				self.prediction_network.W_conv2,
+				self.prediction_network.W_conv3,
+				self.prediction_network.W_fc1,
+				self.prediction_network.W_fc2,
+				self.prediction_network.b_conv1,
+				self.prediction_network.b_conv2,
+				self.prediction_network.b_conv3,
+				self.prediction_network.b_fc1,
+				self.prediction_network.b_fc2,
+			],
+			max_to_keep=2
+		)
 
 		ckpt = tf.train.get_checkpoint_state(CHECKPOINT_DIR)
 		if ckpt and ckpt.model_checkpoint_path:
 			print "loading checkpoint parameters ..."
 			self.saver.restore(self.sess, ckpt.model_checkpoint_path)
 			self.counter = int(ckpt.model_checkpoint_path.split('-')[-1])
+			print "done"
 		else:
-			print "WARNING: no checkpoint found"
+			print "WARNING: no checkpoint found. Starting weights from scratch."
 
 		# self._assertSameWeights()
 
