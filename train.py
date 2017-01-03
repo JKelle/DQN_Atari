@@ -5,6 +5,34 @@
 # This is a direct port to python of the shared library example from
 # ALE provided in doc/examples/sharedLibraryInterfaceExample.cpp
 
+import sys
+sys.path = [
+    "/u/jkelle/.local/lib/python2.7/site-packages/Cython-0.21.1-py2.7-linux-x86_64.egg",
+    "/u/jkelle/.local/lib/python2.7/site-packages/Mako-1.0.0-py2.7.egg",
+    "/u/jkelle/.local/lib/python2.7/site-packages/pysynthetic-0.4.10-py2.7.egg",
+    "/u/jkelle/.local/lib/python2.7/site-packages/PyContracts-1.6.6-py2.7.egg",
+    "/v/filer4b/v20q001/jkelle/DQN_Atari",
+    "/u/jkelle/vision/skpyutils",
+    "/u/jkelle/vision/skvisutils",
+    "/vision/vision_users/jkelle/tensorflow/lib/python2.7",
+    "/vision/vision_users/jkelle/tensorflow/lib/python2.7/plat-x86_64-linux-gnu",
+    "/vision/vision_users/jkelle/tensorflow/lib/python2.7/lib-tk",
+    "/vision/vision_users/jkelle/tensorflow/lib/python2.7/lib-old",
+    "/vision/vision_users/jkelle/tensorflow/lib/python2.7/lib-dynload",
+    "/usr/lib/python2.7",
+    "/usr/lib/python2.7/plat-x86_64-linux-gnu",
+    "/usr/lib/python2.7/lib-tk",
+    "/vision/vision_users/jkelle/tensorflow/local/lib/python2.7/site-packages",
+    "/vision/vision_users/jkelle/tensorflow/lib/python2.7/site-packages",
+    "/usr/lib/python2.7/dist-packages",
+    "/u/jkelle/.local/lib/python2.7/site-packages",
+    "/usr/local/lib/python2.7/site-packages",
+    "/usr/local/lib/python2.7/dist-packages",
+    "/usr/lib/python2.7/dist-packages/PILcompat",
+    "/usr/lib/python2.7/dist-packages/gtk-2.0",
+    "/usr/lib/pymodules/python2.7",
+    "/usr/lib/python2.7/dist-packages/wx-2.8-gtk2-unicode",
+]
 
 import argparse
 from collections import deque
@@ -48,7 +76,7 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
          frames_per_state=4, mini_batch_size=32, history_threshold=50000,
          checkpoint_frequency=1000, target_network_update_frequency=10000,
          learning_rate=0.00025):
-    
+
     agent = DQNAgent(sess, checkpoint_frequency, target_network_update_frequency, learning_rate=learning_rate)
 
     # Initialize replay memory to capacity replay_capacity
@@ -82,7 +110,7 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
             else:
                 # choose action according the DQN policy
                 action_index = agent.getAction(cur_state)
-            
+
             action = LEGAL_ACTIONS[action_index]
 
             # repeat the action 4 times
@@ -117,7 +145,7 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
                     print "generated %d transitions" % len(replay_memory)
                 continue
 
-            # sample transitions from replay_memory and peform SGD    
+            # sample transitions from replay_memory and peform SGD
             transitions = random.sample(replay_memory, mini_batch_size)
             loss = agent.trainMiniBatch(transitions)
             if counter % 100 == 0:
