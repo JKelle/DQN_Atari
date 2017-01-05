@@ -123,9 +123,12 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
                     print "generated %d transitions" % len(replay_memory)
                 continue
 
-            # sample transitions from replay_memory and peform SGD
-            transitions = random.sample(replay_memory, mini_batch_size)
-            loss = agent.trainMiniBatch(transitions)
+            # apply a minibatch SGD update after every 4 chosen actions
+            if counter % 4 == 0:
+                # sample uniformly from replay memory
+                transitions = random.sample(replay_memory, mini_batch_size)
+                loss = agent.trainMiniBatch(transitions)
+
             if counter % 100 == 0:
                 print "%i:\t%s\t%f\t%s minutes" % (counter, action, np.sqrt(loss.dot(loss)), (time.time() - START_TIME)/60)
 
