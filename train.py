@@ -48,19 +48,25 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
          frames_per_state=4, mini_batch_size=32, history_threshold=50000,
          checkpoint_frequency=1000, target_network_update_frequency=10000,
          learning_rate=0.00025):
-    
+
     agent = DQNAgent(sess, checkpoint_frequency, target_network_update_frequency, learning_rate=learning_rate)
+
+    counter = agent.getCounter()
 
     # Initialize replay memory to capacity replay_capacity
     replay_memory = deque([], replay_capacity)
     frame_history = deque([], frames_per_state)
 
     # epsilon-greedy parameters
-    epsilon = 1.0
-    epsilon_min = 0.2
+    epsilon_min = 0.1
     epsilon_delta = (1.0 - epsilon_min)/1000000
 
-    counter = agent.getCounter()
+    # loaded from checkpoint - picking up where we left off
+    epsilon = 1.0 - counter*epsilon_delta
+
+    # clip epsilon
+    epsilon = max(epsilon, epsilon_min)
+    print "epsilon =", epsilon
 
     # TODO: fix this loop condition
     for episode in xrange(num_frames):
@@ -82,7 +88,7 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
             else:
                 # choose action according the DQN policy
                 action_index = agent.getAction(cur_state)
-            
+
             action = LEGAL_ACTIONS[action_index]
 
             # repeat the action 4 times
@@ -117,7 +123,7 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
                     print "generated %d transitions" % len(replay_memory)
                 continue
 
-            # sample transitions from replay_memory and peform SGD    
+            # sample transitions from replay_memory and peform SGD
             transitions = random.sample(replay_memory, mini_batch_size)
             loss = agent.trainMiniBatch(transitions)
             if counter % 100 == 0:
