@@ -130,7 +130,12 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
                 loss = agent.trainMiniBatch(transitions)
 
             if counter % 100 == 0:
-                print "%i:\t%s\t%f\t%s minutes" % (counter, action, np.sqrt(loss.dot(loss)), (time.time() - START_TIME)/60)
+                print "%i:\t%s\t%f\t%s minutes" % (
+                    counter,
+                    action,
+                    np.sqrt(loss.dot(loss)),
+                    (time.time() - START_TIME)/60
+                )
 
 
 if __name__ == '__main__':
