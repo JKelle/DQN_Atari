@@ -97,7 +97,7 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
     print "epsilon =", epsilon
 
     # TODO: fix this loop condition
-    for episode in xrange(num_frames):
+    while True:
 
         ale.reset_game()
 
