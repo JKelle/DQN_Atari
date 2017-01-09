@@ -84,6 +84,33 @@ class DQNAgent(object):
         return self.prediction_network.action.eval(
             feed_dict={self.prediction_network.input_state:input_state})[0]
 
+    def _computeTargetValues(self, rewards, next_states):
+        """
+        Used by trainMiniBatch().
+
+        Args:
+            rewards: numpy array of scalars in the range [-1, 1]
+            next_states: numpy array of "state2" arrays, or False if the
+                transition lead to a terminal state?
+
+        Returns:
+            numpy array of target values ("labels") used to compute loss
+        """
+        labels = []
+
+        for reward, state2 in zip(rewards, next_states):
+            if state2 is False:
+                labels.append(reward)
+            else:
+                # forward pass through the target network
+                target_q_values = self.target_network.q_values.eval(
+                    feed_dict={self.target_network.input_state:state2})
+                labels.append(reward + self.gamma*target_q_values.max())
+
+        # cast to numpy array
+        return np.array(labels, np.float32)
+
+
     def trainMiniBatch(self, transitions):
         """
         Args:
@@ -91,10 +118,11 @@ class DQNAgent(object):
                 - state1: numpy array with shape (84, 84, 4)
                 - action: scalar int in range [0, NUM_ACTIONS]
                 - reward: scalar float in range [-1, 1]
-                - state2: numpy array with shape (84, 84, 4)
+                - state2: numpy array with shape (84, 84, 4), or False if this
+                    transition lead to a terminal state
 
         Returns:
-            loss
+            loss (scalar)
         """
         # reorganize data
         state1, actions, rewards, state2 = zip(*transitions)
@@ -103,15 +131,13 @@ class DQNAgent(object):
         rewards = np.array(rewards, dtype=np.float32)
         state2 = np.array(state2, dtype=np.float32)
 
-        # forward pass through the target network
-        target_q_values = self.target_network.q_values.eval(
-            feed_dict={self.target_network.input_state:state2})
+        # compute target values ("labels")
+        target_values = self._computeTargetValues(rewards, state2)
 
         feed_dict = {
             self.prediction_network.input_state: state1,
             self.prediction_network.actions: actions,
-            self.prediction_network.rewards: rewards,
-            self.prediction_network.target_q_values: target_q_values
+            self.prediction_network.target_values: target_values
         }
 
         self.prediction_network.train_step.run(feed_dict=feed_dict)
@@ -126,7 +152,11 @@ class DQNAgent(object):
         # checkpoint (save weights to disk)
         if self.counter % self.checkpoint_frequency == 0:
             print "checkpointing %d ... " % self.counter
-            self.saver.save(self.sess, os.path.join(CHECKPOINT_DIR, "model"), global_step=self.counter)
+            self.saver.save(
+                self.sess,
+                os.path.join(CHECKPOINT_DIR, "model"),
+                global_step=self.counter
+            )
 
         return self.prediction_network.loss.eval(feed_dict=feed_dict)
 

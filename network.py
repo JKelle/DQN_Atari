@@ -70,22 +70,14 @@ class Network(object):
             ##############
 
             # placeholder for rewards and actions, from transitions
-            self.rewards = tf.placeholder(tf.float32, shape=[None])
+            self.target_values = tf.placeholder(tf.float32, shape=[None])
             self.actions = tf.placeholder(tf.uint8, shape=[None])
-
-            # placeholder for Q values from target network
-            self.target_q_values = tf.placeholder(tf.float32, shape=[None, NUM_ACTIONS])
-
-            # compute: r + gamma * max_{a'} Q_target(s, a')
-            max_target_q_values = tf.reduce_max(self.target_q_values, axis=1)
-            discounted_target_q_values = tf.scalar_mul(gamma, max_target_q_values)
-            target_values = tf.add(self.rewards, discounted_target_q_values)
 
             # compute the Q value of the actions taken in the first state
             observed_values = tf.reduce_sum(tf.mul(self.q_values, tf.one_hot(self.actions, NUM_ACTIONS)), axis=1)
 
             # compute the loss - uses Huber to clip gradient
-            err = tf.sub(target_values, observed_values)
+            err = tf.sub(self.target_values, observed_values)
             self.loss = tf.select(tf.abs(err) < 1.0, 0.5 * tf.square(err), tf.abs(err) - 0.5)
 
             ######################
