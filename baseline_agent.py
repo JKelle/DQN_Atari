@@ -34,7 +34,7 @@ def getPaddleX(state):
     nonzero_x_coords = region.nonzero()[1]
     assert len(nonzero_x_coords) > 0
     return nonzero_x_coords.mean()
-    
+
 
 class BaselineAgent(object):
 
@@ -69,5 +69,5 @@ class BaselineAgent(object):
             print "target_x =", target_x
             print "action =", action
             raw_input()
-        
+
         return action

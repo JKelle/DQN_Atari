@@ -23,7 +23,7 @@ ale.setString('record_screen_dir', record_path)
 ale.setString('record_sound_filename', (record_path + '/sound.wav'))
 ale.setInt('fragsize', 64)
 cmd = 'mkdir '
-cmd += record_path 
+cmd += record_path
 os.system(cmd)
 rom_file = str.encode(sys.argv[1])
 ale.loadROM(rom_file)
