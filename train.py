@@ -139,10 +139,6 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
             # store transition in replay memory
             replay_memory.append((cur_state, action_index, reward, next_state))
 
-            # update epsilon
-            epsilon -= epsilon_delta
-            epsilon = max(epsilon, epsilon_min)
-
             cur_state = next_state
             counter += 1
 
@@ -150,6 +146,10 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
                 if len(replay_memory) % 10000 == 0:
                     print "generated %d transitions" % len(replay_memory)
                 continue
+
+            # update epsilon
+            epsilon -= epsilon_delta
+            epsilon = max(epsilon, epsilon_min)
 
             # apply a minibatch SGD update after every 4 chosen actions
             if counter % 4 == 0:
