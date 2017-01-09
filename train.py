@@ -123,23 +123,29 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
             reward = 0
             for _ in range(num_skip_frames):
                 reward += ale.act(action)
+                if ale.game_over():
+                    break
 
             # clip reward to range [-1, 1]
             reward = min(reward, 1)
             reward = max(reward, -1)
 
             # record new frame
-            prev_frame = cur_frame
-            cur_frame = ale.getScreenRGB()
-            frame_history.append(preprocess(cur_frame, prev_frame))
+            if ale.game_over():
+                replay_memory.append((cur_state, action_index, reward, False))
+            else:
+                prev_frame = cur_frame
+                cur_frame = ale.getScreenRGB()
+                frame_history.append(preprocess(cur_frame, prev_frame))
 
-            # stack the most recent 4 frames
-            next_state = np.stack(frame_history, axis=2)
+                # stack the most recent 4 frames
+                next_state = np.stack(frame_history, axis=2)
 
-            # store transition in replay memory
-            replay_memory.append((cur_state, action_index, reward, next_state))
+                # store transition in replay memory
+                replay_memory.append((cur_state, action_index, reward, next_state))
 
-            cur_state = next_state
+                cur_state = next_state
+
             counter += 1
 
             if len(replay_memory) < history_threshold:
