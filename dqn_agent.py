@@ -104,7 +104,7 @@ class DQNAgent(object):
             else:
                 # forward pass through the target network
                 target_q_values = self.target_network.q_values.eval(
-                    feed_dict={self.target_network.input_state:state2})
+                    feed_dict={self.target_network.input_state:[state2]})
                 labels.append(reward + self.gamma*target_q_values.max())
 
         # cast to numpy array
