@@ -89,9 +89,9 @@ class DQNAgent(object):
         Used by trainMiniBatch().
 
         Args:
-            rewards: numpy array of scalars in the range [-1, 1]
-            next_states: numpy array of "state2" arrays, or False if the
-                transition lead to a terminal state?
+            rewards: list of scalars in the range [-1, 1]
+            next_states: list of "state2" arrays, or False if the transition
+                lead to a terminal state?
 
         Returns:
             numpy array of target values ("labels") used to compute loss
