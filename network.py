@@ -77,9 +77,8 @@ class Network(object):
             observed_values = tf.reduce_sum(tf.mul(self.q_values, tf.one_hot(self.actions, NUM_ACTIONS)), axis=1)
 
             # compute the loss - uses Huber to clip gradient
-            err = tf.sub(self.target_values, observed_values)
-            self.loss = tf.reduce_mean(
-                tf.select(tf.abs(err) < 1.0, 0.5 * tf.square(err), tf.abs(err) - 0.5))
+            err = tf.reduce_mean(tf.sub(self.target_values, observed_values))
+            self.loss = tf.select(tf.abs(err) < 1.0, 0.5 * tf.square(err), tf.abs(err) - 0.5)
 
             ######################
             # Training optimizer #
