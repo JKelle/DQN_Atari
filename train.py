@@ -53,7 +53,7 @@ ale = ALEInterface()
 
 LEGAL_ACTIONS = [1, 11, 12]
 
-ale.setInt(b'random_seed', int(time.time()*1000))
+ale.setInt(b'random_seed', int(time.time()*1000) % 100000)
 
 # Set USE_SDL to true to display the screen. ALE must be compilied
 # with SDL enabled for this to work. On OSX, pygame init is used to
