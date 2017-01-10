@@ -72,6 +72,42 @@ rom_file = "roms/breakout.bin"
 ale.loadROM(rom_file)
 
 
+def doTransition(ale, agent, cur_state, epsilon, num_skip_frames, cur_frame, frame_history):
+    # with probability epsilon, choose a random action
+    if random.random() < epsilon:
+        # take a random action
+        action_index = random.choice(range(len(LEGAL_ACTIONS)))
+    else:
+        # choose action according the DQN policy
+        action_index = agent.getAction(cur_state)
+
+    action = LEGAL_ACTIONS[action_index]
+
+    # repeat the action 4 times
+    reward = 0
+    for _ in range(num_skip_frames):
+        reward += ale.act(action)
+        if ale.game_over():
+            break
+
+    # clip reward to range [-1, 1]
+    reward = min(reward, 1)
+    reward = max(reward, -1)
+
+    # compute next state
+    if ale.game_over():
+        next_state = False
+    else:
+        prev_frame = cur_frame
+        cur_frame = ale.getScreenRGB()
+        frame_history.append(preprocess(cur_frame, prev_frame))
+
+        # stack the most recent 4 frames
+        next_state = np.stack(frame_history, axis=2)
+
+    return action_index, reward, next_state
+
+
 def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
          frames_per_state=4, mini_batch_size=32, history_threshold=50000,
          checkpoint_frequency=1000, target_network_update_frequency=10000,
@@ -79,7 +115,8 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
 
     agent = DQNAgent(sess, checkpoint_frequency, target_network_update_frequency, learning_rate=learning_rate)
 
-    counter = agent.getCounter()
+    minibatch_counter = agent.getCounter()
+    action_counter = 0
 
     # Initialize replay memory to capacity replay_capacity
     replay_memory = deque([], replay_capacity)
@@ -90,15 +127,45 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
     epsilon_delta = (1.0 - epsilon_min)/1000000
 
     # loaded from checkpoint - picking up where we left off
-    epsilon = 1.0 - counter*epsilon_delta
+    epsilon = 1.0 - minibatch_counter*epsilon_delta
 
     # clip epsilon
     epsilon = max(epsilon, epsilon_min)
     print "epsilon =", epsilon
 
-    # TODO: fix this loop condition
-    while True:
+    ##################
+    # burn in period #
+    ##################
 
+    print "beginning burn-in period"
+
+    while len(replay_memory) < history_threshold:
+        ale.reset_game()
+
+        # initialize the frame_history history by repeating the first frame
+        cur_frame = ale.getScreenRGB()
+        for _ in range(num_skip_frames):
+            frame_history.append(preprocess(cur_frame))
+        cur_state = np.stack(frame_history, axis=2)
+
+        while not ale.game_over() and len(replay_memory) < history_threshold:
+
+            action_index, reward, next_state = doTransition(
+                ale, agent, cur_state, 1.0, num_skip_frames, cur_frame, frame_history)
+
+            replay_memory.append((cur_state, action_index, reward, next_state))
+
+            action_counter += 1
+
+        print "\t", len(replay_memory)
+
+    ######################
+    # main learning loop #
+    ######################
+
+    print "beginning learning period"
+
+    while True:
         ale.reset_game()
 
         # initialize the frame_history history by repeating the first frame
@@ -109,67 +176,36 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
 
         while not ale.game_over():
 
-            # epsilon greedy
-            if random.random() < epsilon:
-                # take a random action
-                action_index = random.choice(range(len(LEGAL_ACTIONS)))
-            else:
-                # choose action according the DQN policy
-                action_index = agent.getAction(cur_state)
+            action_index, reward, next_state = doTransition(
+                ale, agent, cur_state, epsilon, num_skip_frames, cur_frame, frame_history)
 
-            action = LEGAL_ACTIONS[action_index]
+            action_counter += 1
 
-            # repeat the action 4 times
-            reward = 0
-            for _ in range(num_skip_frames):
-                reward += ale.act(action)
-                if ale.game_over():
-                    break
+            replay_memory.append((cur_state, action_index, reward, next_state))
 
-            # clip reward to range [-1, 1]
-            reward = min(reward, 1)
-            reward = max(reward, -1)
-
-            # record new frame
             if ale.game_over():
-                replay_memory.append((cur_state, action_index, reward, False))
-            else:
-                prev_frame = cur_frame
-                cur_frame = ale.getScreenRGB()
-                frame_history.append(preprocess(cur_frame, prev_frame))
-
-                # stack the most recent 4 frames
-                next_state = np.stack(frame_history, axis=2)
-
-                # store transition in replay memory
-                replay_memory.append((cur_state, action_index, reward, next_state))
-
-                cur_state = next_state
-
-            counter += 1
-
-            if len(replay_memory) < history_threshold:
-                if len(replay_memory) % 10000 == 0:
-                    print "generated %d transitions" % len(replay_memory)
-                continue
+                break
 
             # update epsilon
             epsilon -= epsilon_delta
             epsilon = max(epsilon, epsilon_min)
 
             # apply a minibatch SGD update after every 4 chosen actions
-            if counter % 4 == 0:
+            if action_counter % 4 == 0:
+
                 # sample uniformly from replay memory
                 transitions = random.sample(replay_memory, mini_batch_size)
                 loss = agent.trainMiniBatch(transitions)
 
-            if counter % 100 == 0:
-                print "%i:\t%s\t%f\t%s minutes" % (
-                    counter,
-                    action,
-                    np.sqrt(loss.dot(loss)),
-                    (time.time() - START_TIME)/60
-                )
+                if minibatch_counter % 100 == 0:
+                    print "%i:\t%s\t%f\t%s minutes" % (
+                        minibatch_counter,
+                        action_index,
+                        np.sqrt(loss.dot(loss)),
+                        (time.time() - START_TIME)/60
+                    )
+
+                minibatch_counter += 1
 
 
 if __name__ == '__main__':
