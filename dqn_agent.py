@@ -9,7 +9,7 @@ from network import Network
 
 NUM_ACTIONS = 3
 CHECKPOINT_DIR = "checkpointReducedActionSet"
-CHECKPOINT_DIR = "/vision/vision_users/jkelle/checkpointReducedActionSet"
+CHECKPOINT_DIR = "/vision/vision_users/jkelle/checkpoint2"
 
 
 class DQNAgent(object):
