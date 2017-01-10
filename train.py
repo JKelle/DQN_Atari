@@ -201,7 +201,7 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
                     print "%i:\t%s\t%f\t%s minutes" % (
                         minibatch_counter,
                         action_index,
-                        np.sqrt(loss.dot(loss)),
+                        loss,
                         (time.time() - START_TIME)/60
                     )
 
