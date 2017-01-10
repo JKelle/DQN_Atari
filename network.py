@@ -19,7 +19,7 @@ class Network(object):
     def __init__(self, name, gamma=0.99, learning_rate=0.00025, momentum=0.95):
         """
         Args:
-            includeLoss: boolean, if true, computatin graph will include ops
+            includeLoss: boolean, if true, computation graph will include ops
                 for computing loss and training
         """
         self.name = name
@@ -28,7 +28,7 @@ class Network(object):
             # data layer
             self.input_state = tf.placeholder(tf.float32, shape=[None, 84, 84, 4])
 
-            # conv2 layer
+            # conv1 layer
             self.W_conv1 = weight_variable([8, 8, 4, 32])
             self.b_conv1 = bias_variable([32])
             h_conv1 = tf.nn.relu(tf.nn.conv2d(self.input_state, self.W_conv1, strides=[1, 4, 4, 1], padding="SAME") + self.b_conv1)
