@@ -128,8 +128,6 @@ class DQNAgent(object):
         state1, actions, rewards, state2 = zip(*transitions)
         state1 = np.array(state1, dtype=np.float32)
         actions = np.array(actions, dtype=np.uint8)
-        rewards = np.array(rewards, dtype=np.float32)
-        state2 = np.array(state2, dtype=np.float32)
 
         # compute target values ("labels")
         target_values = self._computeTargetValues(rewards, state2)
