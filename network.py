@@ -73,7 +73,7 @@ class Network(object):
             self.target_values = tf.placeholder(tf.float32, shape=[None])
             self.actions = tf.placeholder(tf.uint8, shape=[None])
 
-            # compute the Q value of the actions taken in the first state
+            # compute the Q value of the actions taken in the first state of the transition
             observed_values = tf.reduce_sum(tf.mul(self.q_values, tf.one_hot(self.actions, NUM_ACTIONS)), axis=1)
 
             # compute the loss - uses Huber to clip gradient
