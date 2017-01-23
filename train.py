@@ -111,7 +111,7 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
          checkpoint_frequency=100000, target_network_update_frequency=10000,
          learning_rate=0.00025):
 
-    agent = DQNAgent(sess, checkpoint_frequency, target_network_update_frequency, learning_rate=learning_rate)
+    agent = DQNAgent(sess, len(LEGAL_ACTIONS), checkpoint_frequency, target_network_update_frequency, learning_rate=learning_rate)
 
     minibatch_counter = agent.getCounter()
     action_counter = 0
