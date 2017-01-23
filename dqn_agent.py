@@ -82,7 +82,7 @@ class DQNAgent(object):
 
         # forward pass through the prediction network
         return self.prediction_network.action.eval(
-            feed_dict={self.prediction_network.input_state:input_state})[0]
+            feed_dict={self.prediction_network.input_state: input_state})[0]
 
     def _computeTargetValues(self, rewards, next_states):
         """
