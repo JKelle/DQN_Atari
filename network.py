@@ -2,9 +2,6 @@
 import tensorflow as tf
 
 
-NUM_ACTIONS = 3
-
-
 def weight_variable(shape):
     initial = tf.truncated_normal(shape, stddev=0.1)
     return tf.Variable(initial)
@@ -16,7 +13,7 @@ def bias_variable(shape):
 
 
 class Network(object):
-    def __init__(self, name, gamma=0.99, learning_rate=0.00025, momentum=0.95):
+    def __init__(self, name, num_actions, gamma=0.99, learning_rate=0.00025, momentum=0.95):
         """
         Args:
             includeLoss: boolean, if true, computation graph will include ops
@@ -56,8 +53,8 @@ class Network(object):
             # h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
             # fc2 layer
-            self.W_fc2 = weight_variable([512, NUM_ACTIONS])
-            self.b_fc2 = bias_variable([NUM_ACTIONS])
+            self.W_fc2 = weight_variable([512, num_actions])
+            self.b_fc2 = bias_variable([num_actions])
 
             # distribution of actions
             self.q_values = tf.matmul(h_fc1, self.W_fc2) + self.b_fc2
@@ -74,7 +71,7 @@ class Network(object):
             self.actions = tf.placeholder(tf.uint8, shape=[None])
 
             # compute the Q value of the actions taken in the first state of the transition
-            observed_values = tf.reduce_sum(tf.mul(self.q_values, tf.one_hot(self.actions, NUM_ACTIONS)), axis=1)
+            observed_values = tf.reduce_sum(tf.mul(self.q_values, tf.one_hot(self.actions, num_actions)), axis=1)
 
             # compute the loss - uses Huber to clip gradient
             err = tf.reduce_mean(tf.sub(self.target_values, observed_values))

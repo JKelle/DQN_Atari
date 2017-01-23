@@ -51,8 +51,6 @@ DEBUG = False
 
 ale = ALEInterface()
 
-LEGAL_ACTIONS = [1, 11, 12]
-
 ale.setInt(b'random_seed', int(time.time()*1000) % 100000)
 
 # Set USE_SDL to true to display the screen. ALE must be compilied
@@ -71,17 +69,17 @@ if USE_SDL:
 rom_file = "roms/breakout.bin"
 ale.loadROM(rom_file)
 
+LEGAL_ACTIONS = ale.getLegalActionSet()
+
 
 def doTransition(ale, agent, cur_state, epsilon, num_skip_frames, cur_frame, frame_history):
     # with probability epsilon, choose a random action
     if random.random() < epsilon:
         # take a random action
-        action_index = random.choice(range(len(LEGAL_ACTIONS)))
+        action = random.choice(LEGAL_ACTIONS)
     else:
         # choose action according the DQN policy
-        action_index = agent.getAction(cur_state)
-
-    action = LEGAL_ACTIONS[action_index]
+        action = agent.getAction(cur_state)
 
     # repeat the action 4 times
     reward = 0
@@ -105,7 +103,7 @@ def doTransition(ale, agent, cur_state, epsilon, num_skip_frames, cur_frame, fra
         # stack the most recent 4 frames
         next_state = np.stack(frame_history, axis=2)
 
-    return action_index, reward, next_state
+    return action, reward, next_state
 
 
 def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
@@ -150,10 +148,10 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
 
         while not ale.game_over() and len(replay_memory) < history_threshold:
 
-            action_index, reward, next_state = doTransition(
+            action, reward, next_state = doTransition(
                 ale, agent, cur_state, 1.0, num_skip_frames, cur_frame, frame_history)
 
-            replay_memory.append((cur_state, action_index, reward, next_state))
+            replay_memory.append((cur_state, action, reward, next_state))
 
             action_counter += 1
 
@@ -176,12 +174,12 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
 
         while not ale.game_over():
 
-            action_index, reward, next_state = doTransition(
+            action, reward, next_state = doTransition(
                 ale, agent, cur_state, epsilon, num_skip_frames, cur_frame, frame_history)
 
             action_counter += 1
 
-            replay_memory.append((cur_state, action_index, reward, next_state))
+            replay_memory.append((cur_state, action, reward, next_state))
 
             if ale.game_over():
                 break
@@ -200,7 +198,7 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
                 if minibatch_counter % 100 == 0:
                     print "%i:\t%s\t%f\t%s minutes" % (
                         minibatch_counter,
-                        action_index,
+                        action,
                         loss,
                         (time.time() - START_TIME)/60
                     )

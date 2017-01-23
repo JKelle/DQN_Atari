@@ -7,14 +7,13 @@ import tensorflow as tf
 from network import Network
 
 
-NUM_ACTIONS = 3
 CHECKPOINT_DIR = "checkpointReducedActionSet"
 CHECKPOINT_DIR = "/vision/vision_users/jkelle/checkpoint2"
 
 
 class DQNAgent(object):
 
-    def __init__(self, sess, checkpoint_frequency, target_network_update_frequency, learning_rate):
+    def __init__(self, sess, num_actions, checkpoint_frequency, target_network_update_frequency, learning_rate):
         self.sess = sess
 
         # discount factor for future rewards
@@ -24,8 +23,8 @@ class DQNAgent(object):
         self.counter = 0
 
         # defines the convnet architecture in TensorFlow
-        self.prediction_network = Network("prediction", learning_rate=learning_rate)
-        self.target_network = Network("target", learning_rate=learning_rate)
+        self.prediction_network = Network("prediction", num_actions, learning_rate=learning_rate)
+        self.target_network = Network("target", num_actions, learning_rate=learning_rate)
 
         self.sess.run(tf.global_variables_initializer())
 
@@ -109,7 +108,6 @@ class DQNAgent(object):
 
         # cast to numpy array
         return np.array(labels, np.float32)
-
 
     def trainMiniBatch(self, transitions):
         """
