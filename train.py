@@ -193,6 +193,11 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
             epsilon -= epsilon_delta
             epsilon = max(epsilon, epsilon_min)
 
+            # update target network
+            if action_counter % target_network_update_frequency == 0:
+                print "updating target network ..."
+                agent.updateTargetNetwork()
+
             # apply a minibatch SGD update after every 4 chosen actions
             if action_counter % 4 == 0:
 
@@ -200,13 +205,13 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
                 transitions = random.sample(replay_memory, mini_batch_size)
                 loss = agent.trainMiniBatch(transitions)
 
-                if minibatch_counter % 100 == 0:
-                    print "%i:\t%s\t%f\t%s minutes" % (
-                        minibatch_counter,
-                        action,
-                        loss,
-                        (time.time() - START_TIME)/60
-                    )
+                # if minibatch_counter % 100 == 0:
+                #     print "%i:\t%s\t%f\t%s minutes" % (
+                #         minibatch_counter,
+                #         action,
+                #         loss,
+                #         (time.time() - START_TIME)/60
+                #     )
 
                 minibatch_counter += 1
 

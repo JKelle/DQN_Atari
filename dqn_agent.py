@@ -13,12 +13,11 @@ CHECKPOINT_DIR = "/vision/vision_users/jkelle/checkpoint2"
 
 class DQNAgent(object):
 
-    def __init__(self, sess, num_actions, checkpoint_frequency, target_network_update_frequency, learning_rate):
+    def __init__(self, sess, num_actions, checkpoint_frequency, learning_rate):
         self.sess = sess
 
         # discount factor for future rewards
         self.gamma = 0.99
-        self.target_network_update_frequency = target_network_update_frequency
         self.checkpoint_frequency = checkpoint_frequency
         self.counter = 0
 
@@ -153,11 +152,6 @@ class DQNAgent(object):
 
         self.counter += 1
 
-        # update target network
-        if self.counter % self.target_network_update_frequency == 0:
-            print "updating target network ..."
-            self._updateTargetNetwork()
-
         # checkpoint (save weights to disk)
         if self.counter % self.checkpoint_frequency == 0:
             print "checkpointing %d ... " % self.counter
@@ -169,7 +163,7 @@ class DQNAgent(object):
 
         return self.prediction_network.loss.eval(feed_dict=feed_dict)
 
-    def _updateTargetNetwork(self):
+    def updateTargetNetwork(self):
         self.sess.run(self.update_target_network)
         # self._assertSameWeights()
 
