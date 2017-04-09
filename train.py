@@ -53,6 +53,9 @@ ale = ALEInterface()
 
 ale.setInt(b'random_seed', int(time.time()*1000) % 100000)
 
+# prevent ALE from forcing repeated actions (default is 0.25)
+ale.setFloat('repeat_action_probability', 0.0)
+
 # Set USE_SDL to true to display the screen. ALE must be compilied
 # with SDL enabled for this to work. On OSX, pygame init is used to
 # proxy-call SDL_main.
