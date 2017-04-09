@@ -79,7 +79,7 @@ def doTransition(ale, agent, cur_state, epsilon, num_skip_frames, cur_frame, fra
     # with probability epsilon, choose a random action
     if random.random() < epsilon:
         # take a random action
-        action_index = random.choice(MINIMAL_ACTION_SET)
+        action_index = random.choice(range(len(MINIMAL_ACTION_SET)))
     else:
         # choose action according the DQN policy
         action_index = agent.getAction(cur_state)
