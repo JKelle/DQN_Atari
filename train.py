@@ -72,7 +72,6 @@ if USE_SDL:
 rom_file = "roms/breakout.bin"
 ale.loadROM(rom_file)
 
-# LEGAL_ACTIONS = ale.getLegalActionSet()
 MINIMAL_ACTION_SET = ale.getMinimalActionSet()
 
 
@@ -80,7 +79,7 @@ def doTransition(ale, agent, cur_state, epsilon, num_skip_frames, cur_frame, fra
     # with probability epsilon, choose a random action
     if random.random() < epsilon:
         # take a random action
-        action_index = random.choice(LEGAL_ACTIONS)
+        action_index = random.choice(MINIMAL_ACTION_SET)
     else:
         # choose action according the DQN policy
         action_index = agent.getAction(cur_state)
@@ -117,7 +116,7 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
          checkpoint_frequency=100000, target_network_update_frequency=10000,
          learning_rate=0.00025):
 
-    agent = DQNAgent(sess, len(LEGAL_ACTIONS), checkpoint_frequency, target_network_update_frequency, learning_rate=learning_rate)
+    agent = DQNAgent(sess, len(MINIMAL_ACTION_SET), checkpoint_frequency, learning_rate=learning_rate)
 
     minibatch_counter = agent.getCounter()
     action_counter = 0
