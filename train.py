@@ -72,17 +72,20 @@ if USE_SDL:
 rom_file = "roms/breakout.bin"
 ale.loadROM(rom_file)
 
-LEGAL_ACTIONS = ale.getLegalActionSet()
+# LEGAL_ACTIONS = ale.getLegalActionSet()
+MINIMAL_ACTION_SET = ale.getMinimalActionSet()
 
 
 def doTransition(ale, agent, cur_state, epsilon, num_skip_frames, cur_frame, frame_history):
     # with probability epsilon, choose a random action
     if random.random() < epsilon:
         # take a random action
-        action = random.choice(LEGAL_ACTIONS)
+        action_index = random.choice(LEGAL_ACTIONS)
     else:
         # choose action according the DQN policy
-        action = agent.getAction(cur_state)
+        action_index = agent.getAction(cur_state)
+
+    action = MINIMAL_ACTION_SET[action_index]
 
     # repeat the action 4 times
     reward = 0
@@ -106,7 +109,7 @@ def doTransition(ale, agent, cur_state, epsilon, num_skip_frames, cur_frame, fra
         # stack the most recent 4 frames
         next_state = np.stack(frame_history, axis=2)
 
-    return action, reward, next_state
+    return action_index, reward, next_state
 
 
 def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
@@ -151,10 +154,10 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
 
         while not ale.game_over() and len(replay_memory) < history_threshold:
 
-            action, reward, next_state = doTransition(
+            action_index, reward, next_state = doTransition(
                 ale, agent, cur_state, 1.0, num_skip_frames, cur_frame, frame_history)
 
-            replay_memory.append((cur_state, action, reward, next_state))
+            replay_memory.append((cur_state, action_index, reward, next_state))
 
             action_counter += 1
 
@@ -177,12 +180,12 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
 
         while not ale.game_over():
 
-            action, reward, next_state = doTransition(
+            action_index, reward, next_state = doTransition(
                 ale, agent, cur_state, epsilon, num_skip_frames, cur_frame, frame_history)
 
             action_counter += 1
 
-            replay_memory.append((cur_state, action, reward, next_state))
+            replay_memory.append((cur_state, action_index, reward, next_state))
 
             if ale.game_over():
                 break
