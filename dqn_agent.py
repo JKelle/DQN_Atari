@@ -54,6 +54,19 @@ class DQNAgent(object):
             max_to_keep=2
         )
 
+        self.update_target_network = [
+            self.target_network.W_conv1.assign(self.prediction_network.W_conv1),
+            self.target_network.W_conv2.assign(self.prediction_network.W_conv2),
+            self.target_network.W_conv3.assign(self.prediction_network.W_conv3),
+            self.target_network.W_fc1.assign(self.prediction_network.W_fc1),
+            self.target_network.W_fc2.assign(self.prediction_network.W_fc2),
+            self.target_network.b_conv1.assign(self.prediction_network.b_conv1),
+            self.target_network.b_conv2.assign(self.prediction_network.b_conv2),
+            self.target_network.b_conv3.assign(self.prediction_network.b_conv3),
+            self.target_network.b_fc1.assign(self.prediction_network.b_fc1),
+            self.target_network.b_fc2.assign(self.prediction_network.b_fc2),
+        ]
+
         ckpt = tf.train.get_checkpoint_state(CHECKPOINT_DIR)
         if ckpt and ckpt.model_checkpoint_path:
             print "loading checkpoint parameters ..."
@@ -157,16 +170,7 @@ class DQNAgent(object):
         return self.prediction_network.loss.eval(feed_dict=feed_dict)
 
     def _updateTargetNetwork(self):
-        self.sess.run(self.target_network.W_conv1.assign(self.prediction_network.W_conv1))
-        self.sess.run(self.target_network.W_conv2.assign(self.prediction_network.W_conv2))
-        self.sess.run(self.target_network.W_conv3.assign(self.prediction_network.W_conv3))
-        self.sess.run(self.target_network.W_fc1.assign(self.prediction_network.W_fc1))
-        self.sess.run(self.target_network.W_fc2.assign(self.prediction_network.W_fc2))
-        self.sess.run(self.target_network.b_conv1.assign(self.prediction_network.b_conv1))
-        self.sess.run(self.target_network.b_conv2.assign(self.prediction_network.b_conv2))
-        self.sess.run(self.target_network.b_conv3.assign(self.prediction_network.b_conv3))
-        self.sess.run(self.target_network.b_fc1.assign(self.prediction_network.b_fc1))
-        self.sess.run(self.target_network.b_fc2.assign(self.prediction_network.b_fc2))
+        self.sess.run(self.update_target_network)
         # self._assertSameWeights()
 
     def _assertSameWeights(self):
