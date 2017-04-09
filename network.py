@@ -99,4 +99,4 @@ class Network(object):
             # Training optimizer #
             ######################
 
-            self.train_step = tf.train.RMSPropOptimizer(learning_rate, momentum=momentum).minimize(self.loss)
+            self.train_step = tf.train.RMSPropOptimizer(learning_rate, momentum=momentum, epsilon=0.01).minimize(self.loss)
