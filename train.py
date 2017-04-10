@@ -215,15 +215,18 @@ def main(replay_capacity=1000000, num_skip_frames=4,
                 transitions = random.sample(replay_memory, mini_batch_size)
                 loss = agent.trainMiniBatch(transitions)
 
-                if minibatch_counter % 100 == 0:
-                    print "%i:\t%s\t%f\t%s minutes" % (
-                        minibatch_counter,
-                        MINIMAL_ACTION_SET[action_index],
-                        loss,
-                        (time.time() - START_TIME)/60
-                    )
-
                 minibatch_counter += 1
+
+                if minibatch_counter % 100 == 0:
+                    print "\ttime =", (time.time() - START_TIME)/60
+                    print "\tloss =", loss
+                    print "\tepsilon =", epsilon
+                    print "\taction_counter =", action_counter
+                    print "\tepisode_counter =", episode_counter
+                    print "\tminibatch_counter =", minibatch_counter
+                    print "\tlen(replay_memory) =", len(replay_memory)
+                    print "\tmost recent action =", MINIMAL_ACTION_SET[action_index]
+                    print
 
 
 if __name__ == '__main__':
