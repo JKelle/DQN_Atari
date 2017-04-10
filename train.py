@@ -75,7 +75,7 @@ ale.loadROM(rom_file)
 MINIMAL_ACTION_SET = ale.getMinimalActionSet()
 
 
-def doTransition(ale, agent, cur_state, epsilon, num_skip_frames, cur_frame, frame_history):
+def doTransition(ale, agent, cur_state, epsilon, num_skip_frames, preprocessed_frame_history, raw_frame_deque, initial_lives):
     # with probability epsilon, choose a random action
     if random.random() < epsilon:
         # take a random action
@@ -90,7 +90,8 @@ def doTransition(ale, agent, cur_state, epsilon, num_skip_frames, cur_frame, fra
     reward = 0
     for _ in range(num_skip_frames):
         reward += ale.act(action)
-        if ale.game_over():
+        raw_frame_deque.append(ale.getScreenRGB())
+        if ale.game_over() or (ale.lives() < initial_lives):
             break
 
     # clip reward to range [-1, 1]
@@ -98,32 +99,60 @@ def doTransition(ale, agent, cur_state, epsilon, num_skip_frames, cur_frame, fra
     reward = max(reward, -1)
 
     # compute next state
-    if ale.game_over():
+    if ale.game_over() or (ale.lives() < initial_lives):
         next_state = False
     else:
-        prev_frame = cur_frame
-        cur_frame = ale.getScreenRGB()
-        frame_history.append(preprocess(cur_frame, prev_frame))
+        preprocessed_frame_history.append(preprocess(raw_frame_deque))
 
         # stack the most recent 4 frames
-        next_state = np.stack(frame_history, axis=2)
+        next_state = np.stack(preprocessed_frame_history, axis=2)
 
     return action_index, reward, next_state
 
 
-def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
-         frames_per_state=4, mini_batch_size=32, history_threshold=50000,
-         checkpoint_frequency=100000, target_network_update_frequency=10000,
-         learning_rate=0.00025):
+def startEpisode(noop_max, preprocessed_frame_history, raw_frame_deque, num_skip_frames, frames_per_state):
+    """
+    Do a random amount of noop actions to get starting state.
+    """
+    initial_lives = ale.lives()
+    noop_counter = 0
 
-    agent = DQNAgent(sess, len(MINIMAL_ACTION_SET), checkpoint_frequency, learning_rate=learning_rate)
+    for _ in range(np.random.randint(4, noop_max + 1)):
+        ale.act(0)
+        raw_frame_deque.append(ale.getScreenRGB())
+        noop_counter += 1
+
+        if noop_counter % num_skip_frames == 0:
+            preprocessed_frame_history.append(preprocess(raw_frame_deque))
+
+    assert len(preprocessed_frame_history) > 0
+
+    while len(preprocessed_frame_history) < frames_per_state:
+        # copy the first processed frame until we have enough for a state
+        preprocessed_frame_history.appendleft(preprocessed_frame_history[0])
+
+    start_state = np.stack(preprocessed_frame_history, axis=2)
+
+    is_terminal = ale.game_over() or (ale.lives() < initial_lives)
+    assert not is_terminal
+
+    return start_state
+
+
+def main(replay_capacity=1000000, num_skip_frames=4,
+         frames_per_state=4, mini_batch_size=32, history_threshold=50000,
+         checkpoint_frequency=10000, target_network_update_frequency=10000,
+         learning_rate=0.00025, noop_max=30):
+
+    agent = DQNAgent(
+        sess, len(MINIMAL_ACTION_SET), checkpoint_frequency, learning_rate=learning_rate)
 
     minibatch_counter = agent.getCounter()
     action_counter = 0
+    episode_counter = 0
 
     # Initialize replay memory to capacity replay_capacity
     replay_memory = deque([], replay_capacity)
-    frame_history = deque([], frames_per_state)
 
     # epsilon-greedy parameters
     epsilon_min = 0.1
@@ -131,63 +160,44 @@ def main(num_frames=50000000, replay_capacity=1000000, num_skip_frames=4,
 
     # loaded from checkpoint - picking up where we left off
     epsilon = 1.0 - minibatch_counter*epsilon_delta
-
-    # clip epsilon
     epsilon = max(epsilon, epsilon_min)
     print "epsilon =", epsilon
 
-    ##################
-    # burn in period #
-    ##################
-
-    print "beginning burn-in period"
-
-    while len(replay_memory) < history_threshold:
-        ale.reset_game()
-
-        # initialize the frame_history history by repeating the first frame
-        cur_frame = ale.getScreenRGB()
-        for _ in range(num_skip_frames):
-            frame_history.append(preprocess(cur_frame))
-        cur_state = np.stack(frame_history, axis=2)
-
-        while not ale.game_over() and len(replay_memory) < history_threshold:
-
-            action_index, reward, next_state = doTransition(
-                ale, agent, cur_state, 1.0, num_skip_frames, cur_frame, frame_history)
-
-            replay_memory.append((cur_state, action_index, reward, next_state))
-
-            action_counter += 1
-
-        print "\t", len(replay_memory)
-
-    ######################
-    # main learning loop #
-    ######################
-
-    print "beginning learning period"
-
     while True:
+        episode_counter += 1
         ale.reset_game()
 
-        # initialize the frame_history history by repeating the first frame
-        cur_frame = ale.getScreenRGB()
-        for _ in range(num_skip_frames):
-            frame_history.append(preprocess(cur_frame))
-        cur_state = np.stack(frame_history, axis=2)
+        # reset frame/state history
+        preprocessed_frame_history = deque([], frames_per_state)
+        raw_frame_deque = deque([], 2)
 
-        while not ale.game_over():
+        is_terminal = False
+        initial_lives = ale.lives()
+
+        cur_state = startEpisode(
+            noop_max, preprocessed_frame_history, raw_frame_deque,
+            num_skip_frames, frames_per_state)
+
+        # runs and episode
+        while not is_terminal:
 
             action_index, reward, next_state = doTransition(
-                ale, agent, cur_state, epsilon, num_skip_frames, cur_frame, frame_history)
-
-            action_counter += 1
+                ale, agent, cur_state, epsilon, num_skip_frames,
+                preprocessed_frame_history, raw_frame_deque, initial_lives)
 
             replay_memory.append((cur_state, action_index, reward, next_state))
 
-            if ale.game_over():
-                break
+            is_terminal = next_state is False
+
+            cur_state = next_state
+
+            action_counter += 1
+
+            if len(replay_memory) < history_threshold:
+                # in 'burn-in' period; don't update epsilon, and don't do SGD
+                if len(replay_memory) % 1000 == 0:
+                    print "burn-in period. len(replay_memory) =", len(replay_memory)
+                continue
 
             # update epsilon
             epsilon -= epsilon_delta
