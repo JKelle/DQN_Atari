@@ -7,8 +7,7 @@ import tensorflow as tf
 from network import Network
 
 
-CHECKPOINT_DIR = "checkpointReducedActionSet"
-CHECKPOINT_DIR = "/vision/vision_users/jkelle/checkpoint2"
+CHECKPOINT_DIR = "/vision/vision_users/jkelle/dqn_checkpoint_april09"
 
 
 class DQNAgent(object):
