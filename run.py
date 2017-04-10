@@ -140,8 +140,7 @@ def play(agent, num_episodes=1, num_repeat_action=4, frames_per_state=4, epsilon
     """
 
     # Play 10 episodes ("episode" = one game)
-    while episode_counter < num_episodes:
-        episode_counter += 1
+    for episode_counter in range(num_episodes):
         ale.reset_game()
 
         # reset frame/state history
@@ -170,7 +169,7 @@ def play(agent, num_episodes=1, num_repeat_action=4, frames_per_state=4, epsilon
 
             cur_state = next_state
 
-        print('Episode %d ended with score: %d' % (episode, total_reward))
+        print('Episode %d ended with score: %d' % (episode_counter, total_reward))
 
 
 def main(sess):

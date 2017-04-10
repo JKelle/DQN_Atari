@@ -7,7 +7,8 @@ import tensorflow as tf
 from network import Network
 
 
-CHECKPOINT_DIR = "/vision/vision_users/jkelle/dqn_checkpoint_april09"
+CHECKPOINT_DIR = "/vision/vision_users/jkelle/dqn_checkpoint_april09"   # training
+# CHECKPOINT_DIR = "dqn_checkpoint_april09"                             # testing
 
 
 class DQNAgent(object):
