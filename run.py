@@ -27,7 +27,10 @@ ale = ALEInterface()
 
 ale.setInt(b'random_seed', 123)
 
-LEGAL_ACTIONS = [1, 11, 12]
+# prevent ALE from forcing repeated actions (default is 0.25)
+ale.setFloat('repeat_action_probability', 0.0)
+
+MINIMAL_ACTION_SET = ale.getMinimalActionSet()
 
 # Set USE_SDL to true to display the screen. ALE must be compilied
 # with SDL enabled for this to work. On OSX, pygame init is used to
@@ -46,7 +49,71 @@ rom_file = "roms/breakout.bin"
 ale.loadROM(rom_file)
 
 
-def play(agent, num_episodes=1, num_repeat_action=4, frames_per_state=4, epsilon=0.05):
+def doTransition(ale, agent, cur_state, epsilon, num_skip_frames, preprocessed_frame_history, raw_frame_deque, initial_lives):
+    # with probability epsilon, choose a random action
+    if random.random() < epsilon:
+        # take a random action
+        action_index = random.choice(range(len(MINIMAL_ACTION_SET)))
+    else:
+        # choose action according the DQN policy
+        action_index = agent.getAction(cur_state)
+
+    action = MINIMAL_ACTION_SET[action_index]
+
+    # repeat the action 4 times
+    reward = 0
+    for _ in range(num_skip_frames):
+        reward += ale.act(action)
+        raw_frame_deque.append(ale.getScreenRGB())
+        if ale.game_over() or (ale.lives() < initial_lives):
+            break
+
+    # clip reward to range [-1, 1]
+    reward = min(reward, 1)
+    reward = max(reward, -1)
+
+    # compute next state
+    if ale.game_over() or (ale.lives() < initial_lives):
+        next_state = False
+    else:
+        preprocessed_frame_history.append(preprocess(raw_frame_deque))
+
+        # stack the most recent 4 frames
+        next_state = np.stack(preprocessed_frame_history, axis=2)
+
+    return action_index, reward, next_state
+
+
+def startEpisode(noop_max, preprocessed_frame_history, raw_frame_deque, num_skip_frames, frames_per_state):
+    """
+    Do a random amount of noop actions to get starting state.
+    """
+    initial_lives = ale.lives()
+    noop_counter = 0
+
+    for _ in range(np.random.randint(4, noop_max + 1)):
+        ale.act(0)
+        raw_frame_deque.append(ale.getScreenRGB())
+        noop_counter += 1
+
+        if noop_counter % num_skip_frames == 0:
+            preprocessed_frame_history.append(preprocess(raw_frame_deque))
+
+    assert len(preprocessed_frame_history) > 0
+
+    while len(preprocessed_frame_history) < frames_per_state:
+        # copy the first processed frame until we have enough for a state
+        preprocessed_frame_history.appendleft(preprocessed_frame_history[0])
+
+    start_state = np.stack(preprocessed_frame_history, axis=2)
+
+    is_terminal = ale.game_over() or (ale.lives() < initial_lives)
+    assert not is_terminal
+
+    return start_state
+
+
+def play(agent, num_episodes=1, num_repeat_action=4, frames_per_state=4, epsilon=0.05, noop_max=30):
     """
     Actions:
          0 : no ball, no movement
@@ -71,65 +138,45 @@ def play(agent, num_episodes=1, num_repeat_action=4, frames_per_state=4, epsilon
         16 : starts the ball, moves to the right
         17 : starts the ball, moves to the left
     """
-    recent_frames = deque([], frames_per_state)
 
     # Play 10 episodes ("episode" = one game)
-    for episode in xrange(num_episodes):
-        total_reward = 0
-
-        # reset the game
+    while episode_counter < num_episodes:
+        episode_counter += 1
         ale.reset_game()
-        is_new_game = True
 
-        # for the first frame, just copy the same frame four times
-        cur_frame = ale.getScreenRGB()
-        cur_state = np.stack([preprocess(cur_frame)]*frames_per_state, axis=2)
+        # reset frame/state history
+        preprocessed_frame_history = deque([], frames_per_state)
+        raw_frame_deque = deque([], 2)
+
+        is_terminal = False
+        initial_lives = ale.lives()
+
+        cur_state = startEpisode(
+            noop_max, preprocessed_frame_history, raw_frame_deque,
+            num_repeat_action, frames_per_state)
         assert cur_state.shape == (84, 84, 4)
 
-        # play one game
-        while not ale.game_over():
+        total_reward = 0
 
-            # # epsilon greedy
-            # if is_new_game:
-            #     action = 1  # serve the ball, don't move the paddle
-            #     is_new_game = False
-            if random.random() < epsilon:
-                # take a random action
-                action = random.choice(LEGAL_ACTIONS)
-                # print "chose action", action, "*"
-            else:
-                # choose action according the DQN policy
-                action_index = agent.getAction(cur_state)
-                action = LEGAL_ACTIONS[action_index]
-                # print "chose action", action
+        # runs and episode
+        while not is_terminal:
+            _, reward, next_state = doTransition(
+                ale, agent, cur_state, epsilon, num_repeat_action,
+                preprocessed_frame_history, raw_frame_deque, initial_lives)
 
-
-            # take the action 4 times
-            reward = 0
-            for _ in range(num_repeat_action):
-                prev_frame = cur_frame
-                reward += ale.act(action)
-                cur_frame = ale.getScreenRGB()
-                recent_frames.append(preprocess(cur_frame, prev_frame))
-
-            # clip reward to range [-1, 1]
-            reward = min(reward, 1)
-            reward = max(reward, -1)
             total_reward += reward
 
-            # stack the most recent 4 frames
-            cur_state = np.stack(recent_frames, axis=2)
+            is_terminal = next_state is False
+
+            cur_state = next_state
 
         print('Episode %d ended with score: %d' % (episode, total_reward))
-
-        # reset the game to run another episode
-        ale.reset_game()
 
 
 def main(sess):
     possible_agents = {
-        "dqn": DQNAgent(sess, 100000, 100000, 0.00001),
-        "random": RandomAgent(LEGAL_ACTIONS),
+        "dqn": DQNAgent(sess, len(MINIMAL_ACTION_SET), 100000, 0.001),
+        "random": RandomAgent(len(MINIMAL_ACTION_SET)),
         "baseline": BaselineAgent(),
     }
 
