@@ -42,30 +42,30 @@ class Network(object):
             self.W_conv1 = conv_weight([8, 8, 4, 32])
             self.b_conv1 = conv_bias([32], (8, 8, 4))
             h_conv1 = tf.nn.relu(tf.nn.conv2d(self.input_state, self.W_conv1, strides=[1, 4, 4, 1], padding="VALID") + self.b_conv1)
-            print "h_conv1.get_shape() =", h_conv1.get_shape()
+            # print "h_conv1.get_shape() =", h_conv1.get_shape()
             # image is now 20 x 20 x 32
 
             # conv2 layer
             self.W_conv2 = conv_weight([4, 4, 32, 64])
             self.b_conv2 = conv_bias([64], (4, 4, 32))
             h_conv2 = tf.nn.relu(tf.nn.conv2d(h_conv1, self.W_conv2, strides=[1, 2, 2, 1], padding="VALID") + self.b_conv2)
-            print "h_conv2.get_shape() =", h_conv2.get_shape()
+            # print "h_conv2.get_shape() =", h_conv2.get_shape()
             # image is now 9 x 9 x 64
 
             # conv3 layer
             self.W_conv3 = conv_weight([3, 3, 64, 64])
             self.b_conv3 = conv_bias([64], (3, 3, 64))
             h_conv3 = tf.nn.relu(tf.nn.conv2d(h_conv2, self.W_conv3, strides=[1, 1, 1, 1], padding="VALID") + self.b_conv3)
-            print "h_conv3.get_shape() =", h_conv3.get_shape()
+            # print "h_conv3.get_shape() =", h_conv3.get_shape()
             # image is now 7 x 7 x 64
 
             # fc1 layer
             h_conv3_flat = tf.reshape(h_conv3, [-1, 7 * 7 * 64])
-            print "h_conv3_flat.get_shape() =", h_conv3_flat.get_shape()
+            # print "h_conv3_flat.get_shape() =", h_conv3_flat.get_shape()
             self.W_fc1 = linear_weight([7 * 7 * 64, 512])
             self.b_fc1 = linear_bias([512], 7 * 7 * 64)
             h_fc1 = tf.nn.relu(tf.matmul(h_conv3_flat, self.W_fc1) + self.b_fc1)
-            print "h_fc1.get_shape() =", h_fc1.get_shape()
+            # print "h_fc1.get_shape() =", h_fc1.get_shape()
 
             # keep_prob = tf.placeholder(tf.float32)
             # h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
