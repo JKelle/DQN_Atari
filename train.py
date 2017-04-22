@@ -141,7 +141,7 @@ def startEpisode(noop_max, preprocessed_frame_history, raw_frame_deque, num_skip
 
 def main(replay_capacity=1000000, num_skip_frames=4,
          frames_per_state=4, mini_batch_size=32, history_threshold=50000,
-         checkpoint_frequency=10000, target_network_update_frequency=10000,
+         checkpoint_frequency=50000, target_network_update_frequency=10000,
          learning_rate=0.00025, noop_max=30):
 
     agent = DQNAgent(

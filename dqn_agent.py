@@ -50,7 +50,7 @@ class DQNAgent(object):
                 self.prediction_network.b_fc1,
                 self.prediction_network.b_fc2,
             ],
-            max_to_keep=2
+            max_to_keep=40
         )
 
         self.update_target_network = [
