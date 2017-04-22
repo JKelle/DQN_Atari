@@ -49,7 +49,7 @@ ale.loadROM(rom_file)
 MINIMAL_ACTION_SET = ale.getMinimalActionSet()
 
 
-def doTransition(ale, agent, cur_state, epsilon, num_skip_frames, preprocessed_frame_history, raw_frame_deque, initial_lives):
+def doTransition(ale, agent, cur_state, epsilon, num_skip_frames, preprocessed_frame_history, raw_frame_deque):
     # with probability epsilon, choose a random action
     if random.random() < epsilon:
         # take a random action
@@ -65,15 +65,16 @@ def doTransition(ale, agent, cur_state, epsilon, num_skip_frames, preprocessed_f
     for _ in range(num_skip_frames):
         reward += ale.act(action)
         raw_frame_deque.append(ale.getScreenRGB())
-        if ale.game_over() or (ale.lives() < initial_lives):
+        if ale.game_over():
             break
 
     # clip reward to range [-1, 1]
+    true_reward = reward
     reward = min(reward, 1)
     reward = max(reward, -1)
 
     # compute next state
-    if ale.game_over() or (ale.lives() < initial_lives):
+    if ale.game_over():
         next_state = False
     else:
         preprocessed_frame_history.append(preprocess(raw_frame_deque))
@@ -81,14 +82,13 @@ def doTransition(ale, agent, cur_state, epsilon, num_skip_frames, preprocessed_f
         # stack the most recent 4 frames
         next_state = np.stack(preprocessed_frame_history, axis=2)
 
-    return action_index, reward, next_state
+    return action_index, reward, true_reward, next_state
 
 
 def startEpisode(noop_max, preprocessed_frame_history, raw_frame_deque, num_skip_frames, frames_per_state):
     """
     Do a random amount of noop actions to get starting state.
     """
-    initial_lives = ale.lives()
     noop_counter = 0
 
     for _ in range(np.random.randint(4, noop_max + 1)):
@@ -107,7 +107,7 @@ def startEpisode(noop_max, preprocessed_frame_history, raw_frame_deque, num_skip
 
     start_state = np.stack(preprocessed_frame_history, axis=2)
 
-    is_terminal = ale.game_over() or (ale.lives() < initial_lives)
+    is_terminal = ale.game_over()
     assert not is_terminal
 
     return start_state
@@ -148,7 +148,6 @@ def play(agent, num_episodes=1, num_repeat_action=4, frames_per_state=4, epsilon
         raw_frame_deque = deque([], 2)
 
         is_terminal = False
-        initial_lives = ale.lives()
 
         cur_state = startEpisode(
             noop_max, preprocessed_frame_history, raw_frame_deque,
@@ -156,20 +155,22 @@ def play(agent, num_episodes=1, num_repeat_action=4, frames_per_state=4, epsilon
         assert cur_state.shape == (84, 84, 4)
 
         total_reward = 0
+        true_game_score = 0
 
         # runs and episode
         while not is_terminal:
-            _, reward, next_state = doTransition(
+            _, reward, true_reward, next_state = doTransition(
                 ale, agent, cur_state, epsilon, num_repeat_action,
-                preprocessed_frame_history, raw_frame_deque, initial_lives)
+                preprocessed_frame_history, raw_frame_deque)
 
             total_reward += reward
+            true_game_score += true_reward
 
             is_terminal = next_state is False
 
             cur_state = next_state
 
-        print('Episode %d ended with score: %d' % (episode_counter, total_reward))
+        print('Episode %d ended with total_reward: %d\t and true game score: %d' % (episode_counter, total_reward, true_game_score))
 
 
 def main(sess):
@@ -193,8 +194,7 @@ def main(sess):
 
     agent = possible_agents[args.agent_type]
 
-    play(agent, num_episodes=10, epsilon=0.0)
-
+    play(agent, num_episodes=10, epsilon=0.05)
 
 
 if __name__ == '__main__':
